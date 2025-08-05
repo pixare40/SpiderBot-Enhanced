@@ -25,3 +25,4 @@ Thumbs.db
 # Build artifacts
 build/
 dist/
+tutorials/

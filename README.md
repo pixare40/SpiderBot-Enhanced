@@ -159,8 +159,8 @@ Phase relationships for stable walking:
 ### Phase 1: Core Architecture ✅
 - [x] Project setup with PlatformIO
 - [x] Modular class design
-- [ ] Basic leg control implementation
-- [ ] Inverse kinematics integration
+- [x] Basic leg control implementation
+- [x] Inverse kinematics integration
 
 ### Phase 2: Advanced Movement
 - [ ] Gait engine implementation

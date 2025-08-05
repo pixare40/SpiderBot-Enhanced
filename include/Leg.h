@@ -51,6 +51,7 @@ public:
     // Initialization
     void begin();
     void calibrate();
+    void manualCalibration();  // Interactive calibration mode
     
     // Position control (inverse kinematics)
     bool moveTo(const Point3D& position, unsigned long duration_ms = 500);

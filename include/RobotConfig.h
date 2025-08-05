@@ -22,6 +22,17 @@ enum ServoPin {
 #define SERVO_MIN_ANGLE 0
 #define SERVO_MAX_ANGLE 180
 
+// Servo Calibration Offsets (adjust these values for your specific robot)
+// Positive values rotate servo clockwise, negative counter-clockwise
+#define UPPER_RIGHT_ARM_OFFSET 0   // Adjust if arm doesn't point forward at 90°
+#define UPPER_RIGHT_PAW_OFFSET 0   // Adjust if paw doesn't point down at 90°
+#define LOWER_RIGHT_ARM_OFFSET 0   
+#define LOWER_RIGHT_PAW_OFFSET 0   
+#define LOWER_LEFT_ARM_OFFSET 0    
+#define LOWER_LEFT_PAW_OFFSET 0    
+#define UPPER_LEFT_ARM_OFFSET 0    
+#define UPPER_LEFT_PAW_OFFSET 0
+
 // Physical dimensions (mm) - adjust based on your robot
 #define LEG_SEGMENT_1_LENGTH 40  // Upper arm length
 #define LEG_SEGMENT_2_LENGTH 60  // Lower arm + paw length
