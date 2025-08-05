@@ -243,6 +243,19 @@ void Leg::setAnglesImmediate(const JointAngles& angles) {
     final_arm = constrain(final_arm, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
     final_paw = constrain(final_paw, SERVO_MIN_ANGLE, SERVO_MAX_ANGLE);
 
+    // Debug output before writing to servos
+    DEBUG_PRINT("Leg ");
+    DEBUG_PRINT(leg_id);
+    DEBUG_PRINT(" - Requested: (");
+    DEBUG_PRINT(angles.arm_angle);
+    DEBUG_PRINT("°, ");
+    DEBUG_PRINT(angles.paw_angle);
+    DEBUG_PRINT("°) → Hardware: (");
+    DEBUG_PRINT(final_arm);
+    DEBUG_PRINT("°, ");
+    DEBUG_PRINT(final_paw);
+    DEBUG_PRINTLN("°)");
+    
     arm_servo.write(final_arm);
     paw_servo.write(final_paw);
     
