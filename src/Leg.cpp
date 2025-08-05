@@ -35,16 +35,13 @@ Leg::Leg(LegId id) : leg_id(id), is_moving(false), move_duration(0) {
 }
 
 void Leg::begin() {
-    // Initialize servos
+    // Initialize servos only - don't move to position yet
     arm_servo.attach(arm_pin, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
     paw_servo.attach(paw_pin, SERVO_MIN_PULSE, SERVO_MAX_PULSE);
     
-    // Set to standby position
-    standby();
-    
     DEBUG_PRINT("Leg ");
     DEBUG_PRINT(leg_id);
-    DEBUG_PRINT(" initialized on pins ");
+    DEBUG_PRINT(" servos attached to pins ");
     DEBUG_PRINT(arm_pin);
     DEBUG_PRINT(", ");
     DEBUG_PRINTLN(paw_pin);
@@ -310,7 +307,7 @@ void Leg::standby() {
             break;
     }
     
-    setAngles(standby_angles, 500);
+    setAnglesImmediate(standby_angles); // Use immediate positioning like tutorials
 }
 
 void Leg::liftUp(float height) {

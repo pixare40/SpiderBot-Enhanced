@@ -22,16 +22,27 @@ Robot::Robot() :
 void Robot::begin() {
     DEBUG_PRINTLN("🕷️ Initializing Robot...");
     
-    // Initialize all legs
+    // Initialize all leg servos
     for (int i = 0; i < LEG_COUNT; i++) {
         DEBUG_PRINT("Initializing leg ");
         DEBUG_PRINTLN(i);
         legs[i].begin();
-        delay(200);
+        delay(100);
     }
     
-    DEBUG_PRINTLN("✅ Robot initialized!");
+    DEBUG_PRINTLN("📍 Moving all servos to center position (90°,90°)...");
+    // Step 1: Move all servos to center position like tutorial
+    for (int i = 0; i < LEG_COUNT; i++) {
+        legs[i].setAnglesImmediate(JointAngles(90, 90));
+    }
+    delay(1000); // Wait for servos to reach position
+    
+    DEBUG_PRINTLN("🦵 Moving to standby position...");
+    // Step 2: Move to standby position
     standby();
+    delay(1000); // Wait for servos to reach standby
+    
+    DEBUG_PRINTLN("✅ Robot initialized and ready!");
 }
 
 void Robot::calibrateAll() {
@@ -55,7 +66,9 @@ void Robot::standby() {
     
     DEBUG_PRINTLN("🦵 Moving to standby position...");
     
-    // Move all legs to standby using immediate positioning
+    // Use exact tutorial standby positions from text.h
+    // G14, G12, G13, G15, G16, G5, G4, G2
+    // {60, 90, 90, 120, 120, 90, 90, 60}
     legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 60));   // G12=90°, G14=60°
     legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 120));  // G13=90°, G15=120°
     legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 60));    // G4=90°, G2=60°
@@ -393,7 +406,9 @@ void Robot::centerAll() {
     is_moving = false;
     current_gait = GAIT_STANDBY;
     
-    // Use immediate positioning to avoid interference
+    // Use exact tutorial standby positions from text.h  
+    // G14, G12, G13, G15, G16, G5, G4, G2
+    // {60, 90, 90, 120, 120, 90, 90, 60}
     legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 60));   // G12=90°, G14=60°
     legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 120));  // G13=90°, G15=120°
     legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 60));    // G4=90°, G2=60°

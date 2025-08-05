@@ -178,27 +178,32 @@ void loop() {
                 
             case 'q':
                 Serial.println("🦵 SINGLE STEP FORWARD TEST - Using tutorial sequence");
-                robot.standby();
-                delay(500);
-                // Execute first few steps of forward sequence manually for testing
-                Serial.println("Step 1 - Standby");
-                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(90, 70));
-                robot.getLeg(LOWER_RIGHT).setAnglesImmediate(JointAngles(90, 110)); 
-                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(90, 70));
-                robot.getLeg(UPPER_LEFT).setAnglesImmediate(JointAngles(90, 110));
-                delay(1000);
-                Serial.println("Step 2 - Lift right upper & left lower paws");
-                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(90, 90));
-                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(90, 90));
-                delay(1000);
-                Serial.println("Step 3 - Move arms forward/back");
-                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(120, 90));
-                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(60, 90));
-                delay(1000);
-                Serial.println("Step 4 - Put paws down");
-                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(120, 70));
-                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(60, 70));
-                delay(1000);
+                robot.emergencyStop(); // Stop any movement first
+                delay(200);
+                
+                // Execute first 3 steps of forward sequence manually for testing
+                Serial.println("Step 0 - Standby position");
+                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(90, 70));  // G12=90°, G14=70°
+                robot.getLeg(LOWER_RIGHT).setAnglesImmediate(JointAngles(90, 110)); // G13=90°, G15=110°
+                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(90, 70));   // G4=90°, G2=70°
+                robot.getLeg(UPPER_LEFT).setAnglesImmediate(JointAngles(90, 110));  // G5=90°, G16=110°
+                delay(1500);
+                
+                Serial.println("Step 1 - Lift right upper & left lower paws");
+                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(90, 90));  // G12=90°, G14=90°
+                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(90, 90));   // G4=90°, G2=90°
+                delay(1500);
+                
+                Serial.println("Step 2 - Move arms forward/back");
+                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(120, 90)); // G12=120°, G14=90°
+                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(60, 90));   // G4=60°, G2=90°
+                delay(1500);
+                
+                Serial.println("Step 3 - Put paws down");
+                robot.getLeg(UPPER_RIGHT).setAnglesImmediate(JointAngles(120, 70)); // G12=120°, G14=70°
+                robot.getLeg(LOWER_LEFT).setAnglesImmediate(JointAngles(60, 70));   // G4=60°, G2=70°
+                delay(1500);
+                
                 Serial.println("Returning to standby...");
                 robot.standby();
                 break;
