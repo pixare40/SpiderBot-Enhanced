@@ -55,9 +55,14 @@ void Robot::standby() {
     
     DEBUG_PRINTLN("🦵 Moving to standby position...");
     
-    // Move all legs to standby
+    // Move all legs to standby using immediate positioning
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 60));   // G12=90°, G14=60°
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 120));  // G13=90°, G15=120°
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 60));    // G4=90°, G2=60°
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(90, 120));   // G5=90°, G16=120°
+    
+    // Reset all leg phases
     for (int i = 0; i < LEG_COUNT; i++) {
-        legs[i].standby();
         leg_phase[i] = false; // All in stance phase
     }
 }
@@ -71,7 +76,7 @@ void Robot::moveForward(float speed) {
     // Reset gait timing
     gait_start_time = millis();
     current_step = 0;
-    step_duration = DEFAULT_GAIT_SPEED / (movement_speed + 0.1); // Faster speed = shorter duration
+    step_duration = 200; // Match tutorial timing (200ms per step)
     
     DEBUG_PRINT("🚶 Moving forward at speed ");
     DEBUG_PRINTLN(speed);
@@ -85,7 +90,7 @@ void Robot::moveBackward(float speed) {
     
     gait_start_time = millis();
     current_step = 0;
-    step_duration = DEFAULT_GAIT_SPEED / (movement_speed + 0.1);
+    step_duration = 200; // Match tutorial timing
     
     DEBUG_PRINT("🔙 Moving backward at speed ");
     DEBUG_PRINTLN(speed);
@@ -99,7 +104,7 @@ void Robot::turnLeft(float speed) {
     
     gait_start_time = millis();
     current_step = 0;
-    step_duration = DEFAULT_GAIT_SPEED / (movement_speed + 0.1);
+    step_duration = 200; // Match tutorial timing
     
     DEBUG_PRINT("↺ Turning left at speed ");
     DEBUG_PRINTLN(speed);
@@ -113,7 +118,7 @@ void Robot::turnRight(float speed) {
     
     gait_start_time = millis();
     current_step = 0;
-    step_duration = DEFAULT_GAIT_SPEED / (movement_speed + 0.1);
+    step_duration = 200; // Match tutorial timing
     
     DEBUG_PRINT("↻ Turning right at speed ");
     DEBUG_PRINTLN(speed);
@@ -171,29 +176,21 @@ void Robot::executeStandby() {
 void Robot::executeTrot() {
     unsigned long elapsed = millis() - gait_start_time;
     
-    // Simpler trot: just alternate diagonal pairs lifting
+    // Use the proven walking pattern from tutorials
     if (elapsed > step_duration) {
-        // Move to next step
-        current_step = (current_step + 1) % 2;
+        // Move to next step in the sequence
+        current_step = (current_step + 1) % 11; // 11 steps in the tutorial sequence
         gait_start_time = millis();
         
         DEBUG_PRINT("Trot step ");
         DEBUG_PRINT(current_step);
         DEBUG_PRINTLN();
         
-        // EXTREME alternating pattern for maximum visibility
-        if (current_step == 0) {
-            // Lift diagonal pair 1 to MAXIMUM
-            legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 170));  // Almost max
-            legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 170));   // Almost max
-            legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 10));   // Almost min
-            legs[UPPER_LEFT].setAnglesImmediate(JointAngles(90, 10));    // Almost min
-        } else {
-            // Lift diagonal pair 2 to MAXIMUM
-            legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 170));  // Almost max
-            legs[UPPER_LEFT].setAnglesImmediate(JointAngles(90, 170));   // Almost max
-            legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 10));   // Almost min
-            legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 10));    // Almost min
+        // Execute the current step based on direction
+        if (current_direction == FORWARD) {
+            executeForwardStep(current_step);
+        } else if (current_direction == BACKWARD) {
+            executeBackwardStep(current_step);
         }
     }
 }
@@ -206,13 +203,126 @@ void Robot::executeWalk() {
 }
 
 void Robot::executeTurnLeft() {
-    // Similar to trot but with different stride patterns for turning
-    executeTrot(); // Simplified for now
+    unsigned long elapsed = millis() - gait_start_time;
+    
+    if (elapsed > step_duration) {
+        // Move to next step in the turn sequence
+        current_step = (current_step + 1) % 8; // 8 steps in turn sequence
+        gait_start_time = millis();
+        
+        DEBUG_PRINT("Turn left step ");
+        DEBUG_PRINT(current_step);
+        DEBUG_PRINTLN();
+        
+        executeTurnLeftStep(current_step);
+    }
 }
 
 void Robot::executeTurnRight() {
-    // Similar to trot but with different stride patterns for turning  
-    executeTrot(); // Simplified for now
+    unsigned long elapsed = millis() - gait_start_time;
+    
+    if (elapsed > step_duration) {
+        // Move to next step in the turn sequence
+        current_step = (current_step + 1) % 8; // 8 steps in turn sequence  
+        gait_start_time = millis();
+        
+        DEBUG_PRINT("Turn right step ");
+        DEBUG_PRINT(current_step);
+        DEBUG_PRINTLN();
+        
+        executeTurnRightStep(current_step);
+    }
+}
+
+// Forward walking sequence from tutorial (4.2forward.ino)
+void Robot::executeForwardStep(int step) {
+    // Tutorial forward sequence - direct servo angle mapping
+    // Pin mapping: G14=UR_PAW, G12=UR_ARM, G13=LR_ARM, G15=LR_PAW, G16=UL_PAW, G5=UL_ARM, G4=LL_ARM, G2=LL_PAW
+    int forward_sequence[11][8] = {
+        {70, 90, 90, 110, 110, 90, 90, 70},  // Standby
+        {90, 90, 90, 110, 110, 90, 90, 90},  // Right upper paw and left lower paw raised
+        {90, 120, 90, 110, 110, 90, 60, 90}, // Right upper arm and left lower arm forward
+        {70, 120, 90, 110, 110, 90, 60, 70}, // Right upper paw and left lower paw drop
+        {70, 120, 90, 90, 90, 90, 60, 70},   // Left upper paw and right lower paw raised
+        {70, 90, 90, 90, 90, 90, 90, 70},    // Right upper arm and left lower arm back
+        {70, 90, 120, 90, 90, 60, 90, 70},   // Left upper arm and right lower arm forward
+        {70, 90, 120, 110, 110, 60, 90, 70}, // Left upper paw and right lower paw drop
+        {90, 90, 120, 110, 110, 60, 90, 90}, // Right upper paw and left lower paw raised
+        {90, 90, 90, 110, 110, 90, 90, 90},  // Left upper arm and right lower arm back
+        {70, 90, 90, 110, 110, 90, 90, 70}   // Right upper paw and left lower paw drop
+    };
+    
+    // Apply the angles to legs (UR_PAW, UR_ARM, LR_ARM, LR_PAW, UL_PAW, UL_ARM, LL_ARM, LL_PAW)
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(forward_sequence[step][1], forward_sequence[step][0])); // ARM, PAW
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(forward_sequence[step][2], forward_sequence[step][3])); // ARM, PAW
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(forward_sequence[step][6], forward_sequence[step][7]));  // ARM, PAW
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(forward_sequence[step][5], forward_sequence[step][4]));  // ARM, PAW
+}
+
+// Backward walking sequence from tutorial (4.3back.ino)
+void Robot::executeBackwardStep(int step) {
+    // Tutorial backward sequence
+    int backward_sequence[11][8] = {
+        {70, 90, 90, 110, 110, 90, 90, 70},  // Standby
+        {90, 90, 90, 110, 110, 90, 90, 90},  // Right upper paw and left lower paw raised
+        {90, 60, 90, 110, 110, 90, 120, 90}, // Right upper arm and left lower arm back
+        {70, 60, 90, 110, 110, 90, 120, 70}, // Right upper paw and left lower paw drop
+        {70, 60, 90, 90, 90, 90, 120, 70},   // Left upper paw and right lower paw raised
+        {70, 90, 90, 90, 90, 90, 90, 70},    // Right upper arm and left lower arm forward
+        {70, 90, 60, 90, 90, 120, 90, 70},   // Left upper arm and right lower arm back
+        {70, 90, 60, 110, 110, 120, 90, 70}, // Left upper paw and right lower paw drop
+        {90, 90, 60, 110, 110, 120, 90, 90}, // Right upper paw and left lower paw raised
+        {90, 90, 90, 110, 110, 90, 90, 90},  // Left upper arm and right lower arm forward
+        {70, 90, 90, 110, 110, 90, 90, 70}   // Right upper paw and left lower paw drop
+    };
+    
+    // Apply the angles to legs
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(backward_sequence[step][1], backward_sequence[step][0])); // ARM, PAW
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(backward_sequence[step][2], backward_sequence[step][3])); // ARM, PAW
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(backward_sequence[step][6], backward_sequence[step][7]));  // ARM, PAW
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(backward_sequence[step][5], backward_sequence[step][4]));  // ARM, PAW
+}
+
+// Turn left sequence from tutorial (5.1turn_left.ino)
+void Robot::executeTurnLeftStep(int step) {
+    // Tutorial turn left sequence
+    int turn_left_sequence[8][8] = {
+        {70, 90, 90, 110, 110, 90, 90, 70},   // Standby
+        {90, 90, 90, 110, 110, 90, 90, 90},   // Right upper paw and left lower paw raised
+        {90, 135, 90, 110, 110, 90, 135, 90}, // Right upper arm forward, left lower arm back
+        {70, 135, 90, 110, 110, 90, 135, 70}, // Right upper paw and left lower paw drop
+        {70, 135, 90, 90, 90, 90, 135, 70},   // Left upper paw and right lower paw raised
+        {70, 135, 135, 90, 90, 135, 135, 70}, // Left upper arm back and right lower arm forward
+        {70, 135, 135, 110, 110, 135, 135, 70}, // Left upper paw and right lower paw drop
+        {70, 90, 90, 110, 110, 90, 90, 70}    // Return to standby
+    };
+    
+    // Apply the angles to legs
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(turn_left_sequence[step][1], turn_left_sequence[step][0])); // ARM, PAW
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(turn_left_sequence[step][2], turn_left_sequence[step][3])); // ARM, PAW
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(turn_left_sequence[step][6], turn_left_sequence[step][7]));  // ARM, PAW
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(turn_left_sequence[step][5], turn_left_sequence[step][4]));  // ARM, PAW
+}
+
+// Turn right sequence (mirror of turn left)
+void Robot::executeTurnRightStep(int step) {
+    // Mirror the turn left sequence for right turns
+    int turn_right_sequence[8][8] = {
+        {70, 90, 90, 110, 110, 90, 90, 70},   // Standby
+        {90, 90, 90, 110, 110, 90, 90, 90},   // Left upper paw and right lower paw raised
+        {90, 45, 90, 110, 110, 90, 45, 90},   // Left upper arm forward, right lower arm back
+        {70, 45, 90, 110, 110, 90, 45, 70},   // Left upper paw and right lower paw drop
+        {70, 45, 90, 90, 90, 90, 45, 70},     // Right upper paw and left lower paw raised
+        {70, 45, 45, 90, 90, 45, 45, 70},     // Right upper arm back and left lower arm forward
+        {70, 45, 45, 110, 110, 45, 45, 70},   // Right upper paw and left lower paw drop
+        {70, 90, 90, 110, 110, 90, 90, 70}    // Return to standby
+    };
+    
+    // Apply the angles to legs
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(turn_right_sequence[step][1], turn_right_sequence[step][0])); // ARM, PAW
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(turn_right_sequence[step][2], turn_right_sequence[step][3])); // ARM, PAW
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(turn_right_sequence[step][6], turn_right_sequence[step][7]));  // ARM, PAW
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(turn_right_sequence[step][5], turn_right_sequence[step][4]));  // ARM, PAW
 }
 
 void Robot::executeStrafe(bool left) {
@@ -279,12 +389,15 @@ Point3D Robot::getSwingPosition(LegId leg_id, float progress) {
 }
 
 void Robot::centerAll() {
-    DEBUG_PRINTLN("🎯 Centering all legs...");
-    for (int i = 0; i < LEG_COUNT; i++) {
-        legs[i].center();
-    }
+    DEBUG_PRINTLN("🎯 Centering all legs to standby...");
     is_moving = false;
     current_gait = GAIT_STANDBY;
+    
+    // Use immediate positioning to avoid interference
+    legs[UPPER_RIGHT].setAnglesImmediate(JointAngles(90, 60));   // G12=90°, G14=60°
+    legs[LOWER_RIGHT].setAnglesImmediate(JointAngles(90, 120));  // G13=90°, G15=120°
+    legs[LOWER_LEFT].setAnglesImmediate(JointAngles(90, 60));    // G4=90°, G2=60°
+    legs[UPPER_LEFT].setAnglesImmediate(JointAngles(90, 120));   // G5=90°, G16=120°
 }
 
 void Robot::emergencyStop() {

@@ -42,7 +42,7 @@ enum ServoPin {
 // Movement Parameters
 #define DEFAULT_STEP_HEIGHT 20   // mm
 #define DEFAULT_STRIDE_LENGTH 30 // mm
-#define DEFAULT_GAIT_SPEED 200   // ms per step
+#define DEFAULT_GAIT_SPEED 600   // ms per step (slower, smoother walking)
 #define SERVO_INTERPOLATION_STEPS 20
 
 // WiFi Configuration

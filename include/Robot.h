@@ -52,6 +52,12 @@ private:
     void executeTurnRight();
     void executeStrafe(bool left);
     
+    // Step-by-step movement functions (based on tutorial sequences)
+    void executeForwardStep(int step);
+    void executeBackwardStep(int step);
+    void executeTurnLeftStep(int step);
+    void executeTurnRightStep(int step);
+    
     // Utility functions
     void setLegPhases(bool ur, bool lr, bool ll, bool ul);
     void moveLegToPhase(LegId leg_id, bool swing_phase, float progress);

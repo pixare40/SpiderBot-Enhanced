@@ -18,14 +18,10 @@ static const int8_t LEG_PAW_OFFSETS[LEG_COUNT] = {
     UPPER_RIGHT_PAW_OFFSET, LOWER_RIGHT_PAW_OFFSET, LOWER_LEFT_PAW_OFFSET, UPPER_LEFT_PAW_OFFSET
 };
 
-// Servo direction multipliers to account for mechanical orientation differences
-// Based on calibration test observations:
-// Leg 0 (UPPER_RIGHT): 60°=tucked, 120°=out → +1 (normal)
-// Leg 1 (LOWER_RIGHT): 60°=out, 120°=tucked → -1 (inverted) 
-// Leg 2 (LOWER_LEFT): 60°=tucked → +1 (normal)
-// Leg 3 (UPPER_LEFT): 60°=out → -1 (inverted)
-static const int8_t LEG_ARM_DIR[LEG_COUNT] = { 1, -1, 1, -1 };      // Alternating pattern
-static const int8_t LEG_PAW_DIR[LEG_COUNT] = { 1, -1, 1, -1 };      // Same pattern for paws
+// Servo direction multipliers - DISABLED for now to match tutorial behavior exactly
+// All servos will use direct angle mapping as in the working tutorials
+static const int8_t LEG_ARM_DIR[LEG_COUNT] = { 1, 1, 1, 1 };      // No inversion
+static const int8_t LEG_PAW_DIR[LEG_COUNT] = { 1, 1, 1, 1 };      // No inversion
 
 Leg::Leg(LegId id) : leg_id(id), is_moving(false), move_duration(0) {
     arm_pin = LEG_ARM_PINS[id];
@@ -193,8 +189,9 @@ float Leg::constrainArmAngle(float angle) {
 }
 
 float Leg::constrainPawAngle(float angle) {
-    // Paw angle constraints to prevent mechanical interference
-    return constrain(angle, 20, 160);
+    // STRICT paw angle constraints to prevent servo damage
+    // Never allow extreme angles that can burn out servos
+    return constrain(angle, 30, 150);
 }
 
 bool Leg::moveTo(const Point3D& position, unsigned long duration_ms) {
