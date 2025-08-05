@@ -1,117 +1,144 @@
 #include <Arduino.h>
-#include "Leg.h"
+#include "Robot.h"
 #include "RobotConfig.h"
 
-Leg legs[LEG_COUNT] = {
-    Leg(UPPER_RIGHT),
-    Leg(LOWER_RIGHT), 
-    Leg(LOWER_LEFT),
-    Leg(UPPER_LEFT)
-};
+Robot robot;
 
-void debugSetAngles(int leg_id, float arm_angle, float paw_angle) {
-    Serial.println("\n🔍 DEBUG: Setting leg " + String(leg_id) + " to (" + String(arm_angle) + "°, " + String(paw_angle) + "°)");
-    
-    // Show current state before setting
-    JointAngles current = legs[leg_id].getCurrentAngles();
-    Serial.println("  Before: (" + String(current.arm_angle) + "°, " + String(current.paw_angle) + "°)");
-    
-    // Set the angles
-    legs[leg_id].setAnglesImmediate(JointAngles(arm_angle, paw_angle));
-    
-    // Show state after setting
-    current = legs[leg_id].getCurrentAngles();
-    Serial.println("  After:  (" + String(current.arm_angle) + "°, " + String(current.paw_angle) + "°)");
-    
-    delay(1000);
+void printMenu() {
+    Serial.println("\n🕷️ SPIDERBOT ROBOT CONTROL");
+    Serial.println("===========================");
+    Serial.println("Movement Commands:");
+    Serial.println("  'w' - Move forward");
+    Serial.println("  's' - Move backward");
+    Serial.println("  'a' - Turn left");
+    Serial.println("  'd' - Turn right");
+    Serial.println("  'x' - Stop");
+    Serial.println("  'e' - EMERGENCY STOP");
+    Serial.println("");
+    Serial.println("Control Commands:");
+    Serial.println("  'c' - Center all legs");
+    Serial.println("  'b' - Standby position");
+    Serial.println("  'r' - Calibrate all legs");
+    Serial.println("  'p' - Print robot status");
+    Serial.println("  'h' - Show this menu");
+    Serial.println("");
+    Serial.println("Speed Commands:");
+    Serial.println("  '1' - Slow speed (0.3)");
+    Serial.println("  '2' - Medium speed (0.6)");
+    Serial.println("  '3' - Fast speed (0.9)");
+    Serial.println("===========================");
 }
 
 void setup() {
     Serial.begin(115200);
     delay(2000);
     
-    Serial.println("\n🔍 SIMPLE DEBUG TEST");
-    Serial.println("===================");
+    Serial.println("\n🕷️ SpiderBot Enhanced - Robot Demo");
+    Serial.println("==================================");
     
-    // Initialize all legs
-    for (int i = 0; i < LEG_COUNT; i++) {
-        Serial.print("Initializing leg ");
-        Serial.println(i);
-        legs[i].begin();
-        delay(200);
-    }
+    // Initialize robot
+    robot.begin();
     
-    Serial.println("✅ All legs initialized!");
-    Serial.println("\nTesting each leg individually...");
-    
-    // Test each leg going to 60,60 (to see direction mapping effect)
-    for (int i = 0; i < LEG_COUNT; i++) {
-        debugSetAngles(i, 60, 60);
-    }
-    
-    Serial.println("\nCommands:");
-    Serial.println("  '0', '1', '2', '3' - Test specific leg");
-    Serial.println("  'c' - Center all legs (90°)");
-    Serial.println("  's' - Standby position"); 
-    Serial.println("  'l' - Lift all legs");
-    Serial.println("  'd' - Put down all legs");
-    Serial.println("  'r' - Reset all legs");
+    printMenu();
 }
 
 void loop() {
-    // Update all legs
-    for (int i = 0; i < LEG_COUNT; i++) {
-        legs[i].update();
-    }
+    // Update robot (handles gait execution and leg coordination)
+    robot.update();
     
+    // Handle serial commands
     if (Serial.available()) {
         char cmd = Serial.read();
         
         switch(cmd) {
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-                {
-                    int leg_id = cmd - '0';
-                    debugSetAngles(leg_id, 60, 60);
-                }
-                break;
-                
-            case 'c':
-                Serial.println("Centering all legs to 90°...");
-                for (int i = 0; i < LEG_COUNT; i++) {
-                    debugSetAngles(i, 90, 90);
-                }
+            // Movement commands
+            case 'w':
+                Serial.println("🚶 Moving forward...");
+                robot.moveForward();
                 break;
                 
             case 's':
-                Serial.println("Moving to standby position...");
-                for (int i = 0; i < LEG_COUNT; i++) {
-                    legs[i].standby();
-                }
+                Serial.println("🔙 Moving backward...");
+                robot.moveBackward();
                 break;
                 
-            case 'l':
-                Serial.println("Lifting all legs...");
-                for (int i = 0; i < LEG_COUNT; i++) {
-                    legs[i].liftUp(25);
-                }
+            case 'a':
+                Serial.println("↺ Turning left...");
+                robot.turnLeft();
                 break;
                 
             case 'd':
-                Serial.println("Putting down all legs...");
-                for (int i = 0; i < LEG_COUNT; i++) {
-                    legs[i].putDown();
-                }
+                Serial.println("↻ Turning right...");
+                robot.turnRight();
+                break;
+                
+            case 'x':
+                Serial.println("⏹️ Stopping...");
+                robot.stop();
+                break;
+                
+            case 'e':
+                Serial.println("🚨 EMERGENCY STOP!");
+                robot.emergencyStop();
+                break;
+                
+            // Control commands
+            case 'c':
+                Serial.println("🎯 Centering all legs...");
+                robot.centerAll();
+                break;
+                
+            case 'b':
+                Serial.println("🦵 Standby position...");
+                robot.standby();
                 break;
                 
             case 'r':
-                Serial.println("Resetting all legs...");
-                for (int i = 0; i < LEG_COUNT; i++) {
-                    legs[i].begin();
-                    delay(100);
-                }
+                Serial.println("🔧 Calibrating all legs...");
+                robot.calibrateAll();
+                break;
+                
+            case 'p':
+                robot.printStatus();
+                break;
+                
+            // Speed commands
+            case '1':
+                Serial.println("🐌 Slow speed");
+                robot.setSpeed(0.3);
+                break;
+                
+            case '2':
+                Serial.println("🚶 Medium speed");
+                robot.setSpeed(0.6);
+                break;
+                
+            case '3':
+                Serial.println("🏃 Fast speed");
+                robot.setSpeed(0.9);
+                break;
+                
+            case 'h':
+                printMenu();
+                break;
+                
+            // Individual leg tests
+            case '0':
+                Serial.println("🦵 Testing Leg 0 - Extreme movement");
+                robot.legs[0].setAnglesImmediate(JointAngles(90, 170));
+                delay(1000);
+                robot.legs[0].setAnglesImmediate(JointAngles(90, 10));
+                break;
+                
+            case '9':
+                Serial.println("🦵 Testing Leg 1 - Extreme movement");
+                robot.legs[1].setAnglesImmediate(JointAngles(90, 170));
+                delay(1000);
+                robot.legs[1].setAnglesImmediate(JointAngles(90, 10));
+                break;
+                
+            default:
+                Serial.println("Unknown command. Type 'h' for help.");
                 break;
         }
     }
